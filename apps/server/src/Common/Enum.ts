@@ -4,4 +4,5 @@ export enum InputTypeEnum{
 export enum EntityTypeEnum{
     Map = "Map",
     Actor1 = "Actor1",
+    Weapon1 = "Weapon1",
 }

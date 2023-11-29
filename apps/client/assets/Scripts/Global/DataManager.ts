@@ -1,7 +1,7 @@
-import { Prefab } from "cc";
+import { Prefab, SpriteFrame } from "cc";
 import Singleton from "../Base/Singleton";
 import { EntityTypeEnum, IActorMove, IState } from "../Common";
-import { ActorManager } from "../Entitly/ActorManager";
+import { ActorManager } from "../Entitly/Actor/ActorManager";
 import { JoyStickManager } from "../UI/JoyStickManager";
 
 const ACTOR_SPEED = 100;
@@ -15,12 +15,14 @@ export default class DataManager extends Singleton {
   jm: JoyStickManager;
   actorMap:Map<number,ActorManager> = new Map();
   prefabMap:Map<string,Prefab> = new Map();
+  textureMap:Map<string,SpriteFrame[]> = new Map();
 
   state: IState = {
     actors: [
       {
         id: 1,
         type:EntityTypeEnum.Actor1,
+        weaponType:EntityTypeEnum.Weapon1,
         position: {
           x: 0,
           y: 0,
