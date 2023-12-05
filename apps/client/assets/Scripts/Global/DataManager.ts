@@ -4,8 +4,14 @@ import { EntityTypeEnum, IActorMove, IClientInput, IState, InputTypeEnum } from 
 import { ActorManager } from "../Entitly/Actor/ActorManager";
 import { JoyStickManager } from "../UI/JoyStickManager";
 import { BulletManager } from "../Entitly/Bullet/BulletManager";
+import EventManager from "./EventManager";
+import { EventEnum } from "../Enum";
 
 const ACTOR_SPEED = 100;
+const BULLET_SPEED = 600;
+
+const MAP_WIDTH = 960;
+const MAP_HEIGHT = 640;
 
 export default class DataManager extends Singleton {
   static DataManager: any;
@@ -38,7 +44,7 @@ export default class DataManager extends Singleton {
       }
     ],
     bullets: [],
-    nextBulletId : 1,
+    nextBulletId: 1,
   }
 
   applyInput(input: IClientInput) {
@@ -65,8 +71,26 @@ export default class DataManager extends Singleton {
           direction,
           type: this.actorMap.get(owner)!.bulletType,
         }
+        EventManager.Instance.emit(EventEnum.BulletBorn,owner);
         this.state.bullets.push(bullet);
         break;
+      case InputTypeEnum.TimePast: {
+        const { dt } = input;
+        const { bullets } = this.state;
+
+        for (let i = bullets.length - 1; i >= 0; i--) {
+          const bullet = bullets[i];
+          if (Math.abs(bullet.position.x) > MAP_WIDTH / 2 || Math.abs(bullet.position.y) > MAP_HEIGHT / 2) {
+            EventManager.Instance.emit(EventEnum.ExplosionBorn,bullet.id,{x:bullet.position.x,y:bullet.position.y});
+            bullets.splice(i, 1);
+          }
+        }
+
+        for (const bullet of bullets) {
+          bullet.position.x += bullet.direction.x * dt * BULLET_SPEED;
+          bullet.position.y += bullet.direction.y * dt * BULLET_SPEED;
+        }
+      }
     }
   }
 }
