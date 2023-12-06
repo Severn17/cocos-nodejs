@@ -15,6 +15,7 @@ const MAP_HEIGHT = 640;
 
 const ACTOR_RADIUS = 50;
 const BULLET_RADIUS = 10;
+const BULLET_DAMAGE = 5;
 
 export default class DataManager extends Singleton {
   static DataManager: any;
@@ -35,6 +36,7 @@ export default class DataManager extends Singleton {
     actors: [
       {
         id: 1,
+        hp: 100,
         type: EntityTypeEnum.Actor1,
         weaponType: EntityTypeEnum.Weapon1,
         bulletType: EntityTypeEnum.Bullet2,
@@ -49,6 +51,7 @@ export default class DataManager extends Singleton {
       },
       {
         id: 2,
+        hp: 100,
         type: EntityTypeEnum.Actor1,
         weaponType: EntityTypeEnum.Weapon1,
         bulletType: EntityTypeEnum.Bullet2,
@@ -100,9 +103,11 @@ export default class DataManager extends Singleton {
         for (let i = bullets.length - 1; i >= 0; i--) {
           const bullet = bullets[i];
 
+          // 碰撞检测玩家
           for (let j = actors.length - 1; j >= 0; j--) {
             const actor = actors[j];
             if ((actor.position.x - bullet.position.x) ** 2 + (actor.position.y - bullet.position.y) ** 2 < (ACTOR_RADIUS + BULLET_RADIUS) ** 2) {
+              actor.hp -= BULLET_DAMAGE;
               EventManager.Instance.emit(EventEnum.ExplosionBorn, bullet.id, {
                 x: (actor.position.x + bullet.position.x) / 2,
                 y: (actor.position.y + bullet.position.y) / 2

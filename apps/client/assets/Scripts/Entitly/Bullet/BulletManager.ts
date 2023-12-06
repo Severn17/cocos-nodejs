@@ -7,6 +7,7 @@ import { rad2Angle } from '../../Utils';
 import EventManager from '../../Global/EventManager';
 import DataManager from '../../Global/DataManager';
 import { ExplosionManager } from '../Explosion/ExplosionManager';
+import { ObjectPoolManager } from '../../Global/ObjectPoolManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('BulletManager')
@@ -14,7 +15,7 @@ export class BulletManager extends EntityManager {
     type: EntityTypeEnum;
     id: number;
     init(data: IBullet) {
-        
+
         this.type = data.type
         this.id = data.id
         this.fsm = this.addComponent(BulletStateMachine);
@@ -22,21 +23,21 @@ export class BulletManager extends EntityManager {
 
         this.state = EntityStateEnum.Idle;
         this.node.active = false;
-        EventManager.Instance.on(EventEnum.ExplosionBorn,this.handleExplosionBorn,this);
+        EventManager.Instance.on(EventEnum.ExplosionBorn, this.handleExplosionBorn, this);
     }
-    handleExplosionBorn(id: number, {x,y}: IVec2) {
+    handleExplosionBorn(id: number, { x, y }: IVec2) {
         if (id !== this.id) {
             return
         }
 
-        const prefab = DataManager.Instance.prefabMap.get(EntityTypeEnum.Explosion)
-        const explosion = instantiate(prefab);
-        explosion.setParent(DataManager.Instance.stage);
-        explosion.addComponent(ExplosionManager).init(EntityTypeEnum.Explosion, {x,y});
-        
-        EventManager.Instance.off(EventEnum.ExplosionBorn,this.handleExplosionBorn,this);
+        const explosion = ObjectPoolManager.Instance.get(EntityTypeEnum.Explosion);
+        const ex = explosion.getComponent(ExplosionManager) || explosion.addComponent(ExplosionManager);
+        ex.init(EntityTypeEnum.Explosion, { x, y });
+
+        EventManager.Instance.off(EventEnum.ExplosionBorn, this.handleExplosionBorn, this);
         DataManager.Instance.bulletMap.delete(this.id);
-        this.node.destroy();
+
+        ObjectPoolManager.Instance.ret(this.node);
     }
 
     render(data: IBullet) {
@@ -44,9 +45,9 @@ export class BulletManager extends EntityManager {
         const { direction, position } = data;
         this.node.setPosition(position.x, position.y);
 
-        const side = Math.sqrt(direction.x ** 2 + direction.y **2);
+        const side = Math.sqrt(direction.x ** 2 + direction.y ** 2);
         const angle = direction.x > 0 ? rad2Angle(Math.asin(direction.y / side)) : rad2Angle(Math.asin(-direction.y / side)) + 180;
-        this.node.setRotationFromEuler(0,0,angle);
+        this.node.setRotationFromEuler(0, 0, angle);
     }
 }
 

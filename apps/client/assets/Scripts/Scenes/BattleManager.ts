@@ -6,6 +6,8 @@ import { ActorManager } from '../Entitly/Actor/ActorManager';
 import { PrefabPathEnum as PrefabPathEnum, TexturePathEnum } from '../Enum';
 import { EntityTypeEnum, InputTypeEnum } from '../Common';
 import { BulletManager } from '../Entitly/Bullet/BulletManager';
+import { ObjectPoolManager } from '../Global/ObjectPoolManager';
+import { NetworkManager } from '../Global/NetworkManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('BattleManager')
@@ -24,10 +26,20 @@ export class BattleManager extends Component {
     }
 
     async start() {
-        await this.loadRes();
-        this.initMap();
-        this.shouldUpdate = true;
+        await this.connectServer();
+        NetworkManager.Instance.sendMsg("cocos");
+        // await this.loadRes();
+        // this.initMap();
+        // this.shouldUpdate = true;
     }
+
+    async connectServer() {
+        if (!await NetworkManager.Instance.connect().catch((e) => false)) {
+            await new Promise(rs => setTimeout(rs, 1000));
+            await this.connectServer();
+        }
+    }
+
     initMap() {
         const prefab = DataManager.Instance.prefabMap.get(EntityTypeEnum.Map);
         const map = instantiate(prefab);
@@ -58,7 +70,7 @@ export class BattleManager extends Component {
         this.tick(dt);
     }
 
-    tick(dt){
+    tick(dt) {
         this.tickActor(dt);
         DataManager.Instance.applyInput({
             type: InputTypeEnum.TimePast,
@@ -96,15 +108,13 @@ export class BattleManager extends Component {
             }
         }
     }
-    renderBullet(){
+    renderBullet() {
         for (const data of DataManager.Instance.state.bullets) {
             const { id, type } = data;
             let bm = DataManager.Instance.bulletMap.get(id)
             if (!bm) {
-                const prefab = DataManager.Instance.prefabMap.get(type);
-                const bullet = instantiate(prefab);
-                this.stage.addChild(bullet);
-                bm = bullet.addComponent(BulletManager);
+                const bullet = ObjectPoolManager.Instance.get(type);
+                bm = bullet.getComponent(BulletManager) || bullet.addComponent(BulletManager);
                 DataManager.Instance.bulletMap.set(id, bm);
                 bm.init(data);
             }

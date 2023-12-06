@@ -1,4 +1,4 @@
-import { _decorator, Component, EventTouch, input, Input, instantiate, Node, UITransform, Vec2 } from 'cc';
+import { _decorator, Component, EventTouch, input, Input, instantiate, Node, ProgressBar, UITransform, Vec2 } from 'cc';
 import DataManager from '../../Global/DataManager';
 import { EntityTypeEnum, IActor, InputTypeEnum } from '../../Common';
 import { EntityManager } from '../../Base/EntityManager';
@@ -13,7 +13,10 @@ export class ActorManager extends EntityManager {
     bulletType: EntityTypeEnum;
     private wm: WeaponManager;
     id: number;
+    hp:ProgressBar;
+
     init(data: IActor) {
+        this.hp = this.node.getComponentInChildren(ProgressBar);
         this.id = data.id;
         this.bulletType = data.bulletType
         this.fsm = this.addComponent(ActorStateMachine);
@@ -57,12 +60,14 @@ export class ActorManager extends EntityManager {
 
         if (direction.x !== 0) {
             this.node.setScale(direction.x > 0 ? 1 : -1, 1);
+            this.hp.node.setScale(direction.x > 0 ? 1 : -1, 1);
         }
 
         const side = Math.sqrt(direction.x ** 2 + direction.y **2);
         const rad = Math.asin(direction.y / side);
         const angle = rad2Angle(rad)
         this.wm.node.setRotationFromEuler(0,0,angle);
+        this.hp.progress = data.hp / this.hp.totalLength;
     }
 }
 
