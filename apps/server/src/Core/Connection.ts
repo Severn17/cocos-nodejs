@@ -1,6 +1,7 @@
 import { EventEmitter } from "stream";
 import { MyServer } from "./MyServer";
 import { WebSocketServer, WebSocket } from "ws";
+import { IModel } from "../Common";
 
 interface IItem {
     cb: Function;
@@ -56,7 +57,7 @@ export class Connection extends EventEmitter {
         });
     }
 
-    sendMsg(name: string, data) {
+    sendMsg<T extends keyof IModel['msg']>(name: T, data: IModel['msg'][T]) {
         const msg = {
             name,
             data,
@@ -64,7 +65,7 @@ export class Connection extends EventEmitter {
         this.ws.send(JSON.stringify(msg));
     }
 
-    listenMsg(name: string, cb: Function, ctx: unknown) {
+    listenMsg<T extends keyof IModel['msg']>(name: T, cb: (args: IModel['msg'][T]) => void, ctx: unknown) {
         if (this.msgMap.has(name)) {
             this.msgMap.get(name).push({ cb, ctx });
         } else {
@@ -72,7 +73,7 @@ export class Connection extends EventEmitter {
         }
     }
 
-    unListenMsg(name: string, cb: Function, ctx: unknown) {
+    unListenMsg<T extends keyof IModel['msg']>(name: T, cb: (args: IModel['msg'][T]) => void, ctx: unknown) {
         if (this.msgMap.has(name)) {
             const index = this.msgMap.get(name).findIndex((i) => cb === i.cb && i.ctx === ctx);
             index > -1 && this.msgMap.get(name).splice(index, 1);

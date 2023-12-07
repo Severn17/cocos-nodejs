@@ -1,15 +1,16 @@
 import { _decorator, resources, Asset, error } from "cc";
 import Singleton from "../Base/Singleton";
+import { IModel } from "../Common";
 
 interface IItem {
     cb: Function;
     ctx: unknown;
 }
 
-interface ICallApiRet{
-    success:boolean;
-    res?:any;
-    error?:Error
+interface ICallApiRet<T> {
+    success: boolean;
+    res?: T;
+    error?: Error
 }
 
 export class NetworkManager extends Singleton {
@@ -25,7 +26,7 @@ export class NetworkManager extends Singleton {
     connect() {
 
         return new Promise((resolve, reject) => {
-            if(this.isConnect){
+            if (this.isConnect) {
                 resolve(true);
                 return;
             }
@@ -61,28 +62,28 @@ export class NetworkManager extends Singleton {
 
     }
 
-    callApi(name: string, data):Promise<ICallApiRet> {
+    callApi<T extends keyof IModel['api']>(name: T, data: IModel['api'][T]["req"]): Promise<ICallApiRet<IModel['api'][T]["res"]>> {
         return new Promise((resolve, reject) => {
             try {
                 const timer = setTimeout(() => {
                     resolve({ success: false, error: new Error("timeout") });
-                    this.unListenMsg(name, cb, null);
+                    this.unListenMsg(name as any, cb, null);
                 }, 5000);
 
                 const cb = (res) => {
                     resolve(res);
                     clearTimeout(timer);
-                    this.unListenMsg(name, cb, null);
+                    this.unListenMsg(name as any, cb, null);
                 }
-                this.listenMsg(name, cb, null);
-                this.sendMsg(name, data)
+                this.listenMsg(name as any, cb, null);
+                this.sendMsg(name as any, data)
             } catch (error) {
                 resolve({ success: false, error: new Error("timeout") });
             }
         });
     }
 
-    sendMsg(name: string, data) {
+    sendMsg<T extends keyof IModel['msg']>(name: T, data: IModel['msg'][T]) {
         const msg = {
             name,
             data,
@@ -90,7 +91,7 @@ export class NetworkManager extends Singleton {
         this.ws.send(JSON.stringify(msg));
     }
 
-    listenMsg(name: string, cb: Function, ctx: unknown) {
+    listenMsg<T extends keyof IModel['msg']>(name: T, cb: (args: IModel['msg'][T]) => void, ctx: unknown) {
         if (this.map.has(name)) {
             this.map.get(name).push({ cb, ctx });
         } else {
@@ -98,7 +99,7 @@ export class NetworkManager extends Singleton {
         }
     }
 
-    unListenMsg(name: string, cb: Function, ctx: unknown) {
+    unListenMsg<T extends keyof IModel['msg']>(name: T, cb: (args: IModel['msg'][T]) => void, ctx: unknown) {
         if (this.map.has(name)) {
             const index = this.map.get(name).findIndex((i) => cb === i.cb && i.ctx === ctx);
             index > -1 && this.map.get(name).splice(index, 1);
