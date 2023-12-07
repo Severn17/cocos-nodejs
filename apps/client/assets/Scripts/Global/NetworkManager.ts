@@ -17,6 +17,7 @@ export class NetworkManager extends Singleton {
         return super.GetInstance<NetworkManager>();
     }
 
+    isConnect: boolean = false;
     port = 9876;
     ws: WebSocket;
     private map: Map<string, Array<IItem>> = new Map();
@@ -24,16 +25,23 @@ export class NetworkManager extends Singleton {
     connect() {
 
         return new Promise((resolve, reject) => {
+            if(this.isConnect){
+                resolve(true);
+                return;
+            }
             this.ws = new WebSocket(`ws://localhost:${9876}/`);
             this.ws.onopen = () => {
+                this.isConnect = true;
                 resolve(true);
             };
             this.ws.onclose = () => {
-                resolve(false);
+                this.isConnect = false;
+                reject(false);
             };
             this.ws.onerror = (e) => {
+                this.isConnect = false;
                 console.log(e);
-                resolve(false);
+                reject(false);
             };
             this.ws.onmessage = (e) => {
                 console.log("onmessage", e.data);

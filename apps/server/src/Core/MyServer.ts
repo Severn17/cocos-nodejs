@@ -1,8 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { Connection } from "./Connection";
 import { ApiMsgEnum } from "../Common";
+import { EventEmitter } from "stream";
 
-export class MyServer {
+export class MyServer extends EventEmitter {
     port: number;
     wss: WebSocketServer;
 
@@ -10,6 +11,7 @@ export class MyServer {
     connections: Set<Connection> = new Set();
 
     constructor({ port }: { port: number }) {
+        super();
         this.port = port;
     }
 
@@ -32,12 +34,12 @@ export class MyServer {
             this.wss.on('connection', (ws: WebSocket) => {
                 const connection = new Connection(this, ws);
                 this.connections.add(connection);
-                console.log('connection add: ', this.connections.size);
-
+                
+                this.emit('connection', connection);
 
                 connection.on('close', () => {
                     this.connections.delete(connection);
-                    console.log('connection delete: ', this.connections.size);
+                    this.emit('disconnection', connection);
                 });
             });
         });

@@ -16,7 +16,7 @@ export enum EventEnum {
   ClientSync = "ClientSync",
 }
 
-export enum PrefabPathEnum{
+export enum PrefabPathEnum {
   Map = "prefab/Map",
   Actor1 = "prefab/Actor",
   Weapon1 = "prefab/Weapon1",
@@ -24,7 +24,7 @@ export enum PrefabPathEnum{
   Explosion = "prefab/Explosion",
 }
 
-export enum TexturePathEnum{
+export enum TexturePathEnum {
   Actor1Idle = "texture/weapon/actor1/idle",
   Actor1Run = "texture/actor/actor1/run",
   Weapon1Idle = "texture/weapon/weapon1/idle",
@@ -33,8 +33,13 @@ export enum TexturePathEnum{
   ExplosionIdle = "texture/explosion",
 }
 
-export enum EntityStateEnum{
+export enum EntityStateEnum {
   Idle = "Idle",
   Run = "Run",
   Attack = "Attack",
+}
+
+export enum SceneEnum {
+  Login = "Login",
+  Battle = "Battle",
 }

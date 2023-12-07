@@ -10,7 +10,7 @@ interface IItem {
 export class Connection extends EventEmitter {
 
     private msgMap: Map<string, Array<IItem>> = new Map();
-
+    
     constructor(private server: MyServer, private ws: WebSocket) {
         super();
         this.ws.on('close', () => {
@@ -29,7 +29,7 @@ export class Connection extends EventEmitter {
                         const res = cb.call(null, this, data)
                         this.sendMsg(name, {
                             success: true,
-                            data: res,
+                            res: res,
                         })
                     } catch (e) {
                         this.sendMsg(name, {
