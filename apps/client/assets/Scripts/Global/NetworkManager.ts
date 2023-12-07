@@ -1,9 +1,15 @@
-import { _decorator, resources, Asset } from "cc";
+import { _decorator, resources, Asset, error } from "cc";
 import Singleton from "../Base/Singleton";
 
 interface IItem {
     cb: Function;
     ctx: unknown;
+}
+
+interface ICallApiRet{
+    success:boolean;
+    res?:any;
+    error?:Error
 }
 
 export class NetworkManager extends Singleton {
@@ -47,8 +53,33 @@ export class NetworkManager extends Singleton {
 
     }
 
-    sendMsg(data) {
-        this.ws.send(data);
+    callApi(name: string, data):Promise<ICallApiRet> {
+        return new Promise((resolve, reject) => {
+            try {
+                const timer = setTimeout(() => {
+                    resolve({ success: false, error: new Error("timeout") });
+                    this.unListenMsg(name, cb, null);
+                }, 5000);
+
+                const cb = (res) => {
+                    resolve(res);
+                    clearTimeout(timer);
+                    this.unListenMsg(name, cb, null);
+                }
+                this.listenMsg(name, cb, null);
+                this.sendMsg(name, data)
+            } catch (error) {
+                resolve({ success: false, error: new Error("timeout") });
+            }
+        });
+    }
+
+    sendMsg(name: string, data) {
+        const msg = {
+            name,
+            data,
+        }
+        this.ws.send(JSON.stringify(msg));
     }
 
     listenMsg(name: string, cb: Function, ctx: unknown) {
@@ -58,4 +89,12 @@ export class NetworkManager extends Singleton {
             this.map.set(name, [{ cb, ctx }]);
         }
     }
+
+    unListenMsg(name: string, cb: Function, ctx: unknown) {
+        if (this.map.has(name)) {
+            const index = this.map.get(name).findIndex((i) => cb === i.cb && i.ctx === ctx);
+            index > -1 && this.map.get(name).splice(index, 1);
+        }
+    }
+
 }

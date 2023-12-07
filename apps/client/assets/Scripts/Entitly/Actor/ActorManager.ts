@@ -3,9 +3,10 @@ import DataManager from '../../Global/DataManager';
 import { EntityTypeEnum, IActor, InputTypeEnum } from '../../Common';
 import { EntityManager } from '../../Base/EntityManager';
 import { ActorStateMachine } from './ActorStateMachine';
-import { EntityStateEnum } from '../../Enum';
+import { EntityStateEnum, EventEnum } from '../../Enum';
 import { WeaponManager } from '../Weapon/WeaponManager';
 import { rad2Angle } from '../../Utils';
+import EventManager from '../../Global/EventManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('ActorManager')
@@ -37,7 +38,7 @@ export class ActorManager extends EntityManager {
         }
         if (DataManager.Instance.jm.input.length()) {
             const { x, y } = DataManager.Instance.jm.input;
-            DataManager.Instance.applyInput({
+            EventManager.Instance.emit(EventEnum.ClientSync,{
                 id: 1,
                 type: InputTypeEnum.ActorMove,
                 direction: {
