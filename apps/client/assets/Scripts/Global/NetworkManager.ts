@@ -54,6 +54,9 @@ export class NetworkManager extends Singleton {
                             cb.call(ctx, data);
                         });
                     }
+                    else {
+                        console.log("no listener", name);
+                    }
                 } catch (error) {
                     console.log(error);
                 }

@@ -1,12 +1,13 @@
 import { PlayerManager } from "./Biz/PlayerManager";
-import { ApiMsgEnum, IApiPlayerJoinReq, IMsgServerSync } from "./Common";
+import { RoomManager } from "./Biz/RoomManager";
+import { ApiMsgEnum, IApiPlayerJoinReq, IApiPlayerJoinRes, IApiPlayerListReq, IApiPlayerListRes, IApiRoomCreateReq, IApiRoomCreateRes, IApiRoomJoinReq, IApiRoomJoinRes, IApiRoomLeaveReq, IApiRoomLeaveRes, IApiRoomListReq, IApiRoomListRes, IMsgServerSync } from "./Common";
 import { MyServer, Connection } from "./Core";
 import { symlinkCommon } from "./Utils";
 
 
 symlinkCommon();
 
-declare module "./Core"{
+declare module "./Core" {
     interface Connection {
         playerId: number;
     }
@@ -20,23 +21,106 @@ server.on('connection', (connection: Connection) => {
 });
 
 server.on('disconnection', (connection: Connection) => {
-    console.log('disconnection delete: ', server.connections.size);
     if (connection.playerId) {
         PlayerManager.Instance.removePlayer(connection.playerId);
     }
+    PlayerManager.Instance.snycPlayers();
     console.log("PlayerManager.Instance.players.size : ", PlayerManager.Instance.players.size);
 });
 
-server.setApi(ApiMsgEnum.ApiPlayerJoin, (connection: Connection, data: IApiPlayerJoinReq) => {
+server.setApi(ApiMsgEnum.ApiPlayerJoin, (connection: Connection, data: IApiPlayerJoinReq): IApiPlayerJoinRes => {
     const { nickname } = data;
     const player = PlayerManager.Instance.createPlayer({
         nickname,
         connection
     });
     connection.playerId = player.id;
+    PlayerManager.Instance.snycPlayers();
     return {
         player: PlayerManager.Instance.getPlayerView(player),
     };
+});
+
+server.setApi(ApiMsgEnum.ApiPlayerList, (connection: Connection, data: IApiPlayerListReq): IApiPlayerListRes => {
+    return {
+        list: PlayerManager.Instance.getPlayersView(),
+    };
+});
+
+server.setApi(ApiMsgEnum.ApiRoomList, (connection: Connection, data: IApiRoomListReq): IApiRoomListRes => {
+    return {
+        list: RoomManager.Instance.getRoomsView(),
+    };
+});
+
+server.setApi(ApiMsgEnum.ApiRoomCreate, (connection: Connection, data: IApiRoomCreateReq): IApiRoomCreateRes => {
+    if (!connection.playerId) {
+        throw new Error('connection.playerId is null');
+    }
+    else {
+        const newRoom = RoomManager.Instance.createRoom();
+        const room = RoomManager.Instance.joinRoom(newRoom.id, connection.playerId);
+        if (room) {
+            RoomManager.Instance.snycRooms();
+            PlayerManager.Instance.snycPlayers();
+            return {
+                room: RoomManager.Instance.getRoomView(room),
+            };
+        }
+        else {
+            throw new Error('room is null');
+        }
+
+    }
+});
+
+server.setApi(ApiMsgEnum.ApiRoomJoin, (connection: Connection, { rid }: IApiRoomJoinReq): IApiRoomJoinRes => {
+    if (!connection.playerId) {
+        throw new Error('connection.playerId is null');
+    }
+    else {
+        const room = RoomManager.Instance.joinRoom(rid, connection.playerId);
+        if (room) {
+            PlayerManager.Instance.snycPlayers();
+            RoomManager.Instance.snycRooms();
+            RoomManager.Instance.snycRoom(room.id);
+            return {
+                room: RoomManager.Instance.getRoomView(room),
+            };
+        }
+        else {
+            throw new Error('room is null');
+        }
+
+    }
+});
+
+server.setApi(ApiMsgEnum.ApiRoomLeave, (connection: Connection, data: IApiRoomLeaveReq): IApiRoomLeaveRes => {
+    if (!connection.playerId) {
+        throw new Error('connection.playerId is null');
+    }
+    else {
+        const player = PlayerManager.Instance.idMapPlayer.get(connection.playerId);
+        if (!player) {
+            throw new Error('player is null');
+        }
+        else {
+            const rid = player.rid;
+            if (!rid) {
+                throw new Error('rid is null');
+            }
+            else {
+                console.log('ApiRoomLeave ', player.rid);
+                const room = RoomManager.Instance.leaveRoom(rid, connection.playerId);
+                PlayerManager.Instance.snycPlayers();
+                RoomManager.Instance.snycRooms();
+                RoomManager.Instance.snycRoom(rid);
+                return {
+
+                };
+            }
+        }
+    }
 });
 
 server.start()
