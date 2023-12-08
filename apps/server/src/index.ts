@@ -1,6 +1,6 @@
 import { PlayerManager } from "./Biz/PlayerManager";
 import { RoomManager } from "./Biz/RoomManager";
-import { ApiMsgEnum, IApiPlayerJoinReq, IApiPlayerJoinRes, IApiPlayerListReq, IApiPlayerListRes, IApiRoomCreateReq, IApiRoomCreateRes, IApiRoomJoinReq, IApiRoomJoinRes, IApiRoomLeaveReq, IApiRoomLeaveRes, IApiRoomListReq, IApiRoomListRes, IMsgServerSync } from "./Common";
+import { ApiMsgEnum, IApiPlayerJoinReq, IApiPlayerJoinRes, IApiPlayerListReq, IApiPlayerListRes, IApiRoomCreateReq, IApiRoomCreateRes, IApiRoomJoinReq, IApiRoomJoinRes, IApiRoomLeaveReq, IApiRoomLeaveRes, IApiRoomListReq, IApiRoomListRes, IApiStartGameReq, IApiStartGameRes, IMsgServerSync } from "./Common";
 import { MyServer, Connection } from "./Core";
 import { symlinkCommon } from "./Utils";
 
@@ -122,6 +122,32 @@ server.setApi(ApiMsgEnum.ApiRoomLeave, (connection: Connection, data: IApiRoomLe
         }
     }
 });
+
+server.setApi(ApiMsgEnum.ApiStartGame, (connection: Connection, data: IApiStartGameReq): IApiStartGameRes => {
+    if (!connection.playerId) {
+        throw new Error('connection.playerId is null');
+    }
+    else {
+        const player = PlayerManager.Instance.idMapPlayer.get(connection.playerId);
+        if (!player) {
+            throw new Error('player is null');
+        }
+        else {
+            const rid = player.rid;
+            if (!rid) {
+                throw new Error('rid is null');
+            }
+            else {
+                console.log('ApiRoomLeave ', player.rid);
+                const room = RoomManager.Instance.startGame(rid);
+                return {
+
+                };
+            }
+        }
+    }
+});
+
 
 server.start()
     .then(() => {

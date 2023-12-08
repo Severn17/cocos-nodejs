@@ -52,3 +52,9 @@ export interface IApiRoomLeaveReq {
 
 export interface IApiRoomLeaveRes {
 }
+
+export interface IApiStartGameReq {
+}
+
+export interface IApiStartGameRes {
+}

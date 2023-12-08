@@ -25,7 +25,7 @@ export class BattleManager extends Component {
     async start() {
         this.clearGame();
         await Promise.all([this.connectServer(), this.loadRes()])
-        // this.initGame();
+        this.initGame();
     }
 
     initGame() {

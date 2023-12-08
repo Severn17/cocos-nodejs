@@ -1,6 +1,6 @@
 import { _decorator, Component, director, EditBox, EventTouch, input, Input, instantiate, Node, Prefab, UITransform, Vec2 } from 'cc';
 import { NetworkManager } from '../Global/NetworkManager';
-import { ApiMsgEnum, IApiPlayerListRes, IApiRoomListRes, IMsgRoom } from '../Common';
+import { ApiMsgEnum, IApiPlayerListRes, IApiRoomListRes, IMsgRoom, IMsgStartGame } from '../Common';
 import DataManager from '../Global/DataManager';
 import { SceneEnum } from '../Enum';
 import { PlayerManager } from '../UI/PlayerManager';
@@ -16,6 +16,7 @@ export class RoomManager extends Component {
 
     onLoad() {
         NetworkManager.Instance.listenMsg(ApiMsgEnum.MsgRoom, this.renderPlayer, this)
+        NetworkManager.Instance.listenMsg(ApiMsgEnum.MsgStartGame, this.startGame, this)
     }
 
     start() {
@@ -26,6 +27,7 @@ export class RoomManager extends Component {
 
     onDestroy() {
         NetworkManager.Instance.unListenMsg(ApiMsgEnum.MsgRoom, this.renderPlayer, this)
+        NetworkManager.Instance.unListenMsg(ApiMsgEnum.MsgStartGame, this.startGame, this)
     }
 
 
@@ -55,6 +57,21 @@ export class RoomManager extends Component {
         }
         DataManager.Instance.roomInfo = null;
         director.loadScene(SceneEnum.Hall);
+    }
+
+
+
+    async handleStartGame() {
+        const { success, error, res } = await NetworkManager.Instance.callApi(ApiMsgEnum.ApiStartGame, {})
+        if (!success) {
+            console.log(error);
+            return;
+        }
+    }
+
+    async startGame({ state }: IMsgStartGame) {
+        DataManager.Instance.state = state;
+        director.loadScene(SceneEnum.Battle);
     }
 
 }
